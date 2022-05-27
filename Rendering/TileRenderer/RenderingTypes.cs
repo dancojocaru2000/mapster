@@ -17,7 +17,8 @@ public struct GeoFeature : BaseShape
         Desert,
         Unknown,
         Water,
-        Residential
+        Residential,
+        Leisure
     }
 
     public int ZIndex
@@ -41,6 +42,7 @@ public struct GeoFeature : BaseShape
                 case GeoFeatureType.Water:
                     return 40;
                 case GeoFeatureType.Residential:
+                case GeoFeatureType.Leisure:
                     return 41;
             }
 
@@ -82,15 +84,24 @@ public struct GeoFeature : BaseShape
             case GeoFeatureType.Residential:
                 color = Color.LightCoral;
                 break;
+            case GeoFeatureType.Leisure:
+                color = Color.LightGreen;
+                break;
         }
 
-        if (!IsPolygon)
+		if (!IsPolygon)
         {
             var pen = new Pen(color, 1.2f);
             context.DrawLines(pen, ScreenCoordinates);
         }
+        else if (Type == GeoFeatureType.Leisure)
+        {
+            context.DrawPolygon(new Pen(color, 1.2f), ScreenCoordinates);
+            context.FillPolygon(color.WithAlpha(0.2f), ScreenCoordinates);
+        }
         else
         {
+            // TODO: Explore .WithAlpha
             context.FillPolygon(color, ScreenCoordinates);
         }
     }
@@ -99,50 +110,6 @@ public struct GeoFeature : BaseShape
     {
         IsPolygon = true;
         Type = type;
-        ScreenCoordinates = new PointF[c.Length];
-        for (var i = 0; i < c.Length; i++)
-            ScreenCoordinates[i] = new PointF((float)MercatorProjection.lonToX(c[i].Longitude),
-                (float)MercatorProjection.latToY(c[i].Latitude));
-    }
-
-    public GeoFeature(ReadOnlySpan<Coordinate> c, MapFeatureData feature)
-    {
-        IsPolygon = feature.Type == GeometryType.Polygon;
-        var naturalKey = feature.Properties.FirstOrDefault(x => x.Key == "natural").Value;
-        Type = GeoFeatureType.Unknown;
-        if (naturalKey != null)
-        {
-            if (naturalKey == "fell" ||
-                naturalKey == "grassland" ||
-                naturalKey == "heath" ||
-                naturalKey == "moor" ||
-                naturalKey == "scrub" ||
-                naturalKey == "wetland")
-            {
-                Type = GeoFeatureType.Plain;
-            }
-            else if (naturalKey == "wood" ||
-                     naturalKey == "tree_row")
-            {
-                Type = GeoFeatureType.Forest;
-            }
-            else if (naturalKey == "bare_rock" ||
-                     naturalKey == "rock" ||
-                     naturalKey == "scree")
-            {
-                Type = GeoFeatureType.Mountains;
-            }
-            else if (naturalKey == "beach" ||
-                     naturalKey == "sand")
-            {
-                Type = GeoFeatureType.Desert;
-            }
-            else if (naturalKey == "water")
-            {
-                Type = GeoFeatureType.Water;
-            }
-        }
-
         ScreenCoordinates = new PointF[c.Length];
         for (var i = 0; i < c.Length; i++)
             ScreenCoordinates[i] = new PointF((float)MercatorProjection.lonToX(c[i].Longitude),
@@ -202,7 +169,6 @@ public struct PopulatedPlace : BaseShape
         for (var i = 0; i < c.Length; i++)
             ScreenCoordinates[i] = new PointF((float)MercatorProjection.lonToX(c[i].Longitude),
                 (float)MercatorProjection.latToY(c[i].Latitude));
-        var name = feature.Properties.FirstOrDefault(x => x.Key == "name").Value;
 
         if (feature.Label.IsEmpty)
         {
@@ -211,28 +177,9 @@ public struct PopulatedPlace : BaseShape
         }
         else
         {
-            Name = string.IsNullOrWhiteSpace(name) ? feature.Label.ToString() : name;
+            Name = feature.Label.ToString();
             ShouldRender = true;
         }
-    }
-
-    public static bool ShouldBePopulatedPlace(MapFeatureData feature)
-    {
-        // https://wiki.openstreetmap.org/wiki/Key:place
-        if (feature.Type != GeometryType.Point)
-        {
-            return false;
-        }
-        foreach (var entry in feature.Properties)
-            if (entry.Key.StartsWith("place"))
-            {
-                if (entry.Value.StartsWith("city") || entry.Value.StartsWith("town") ||
-                    entry.Value.StartsWith("locality") || entry.Value.StartsWith("hamlet"))
-                {
-                    return true;
-                }
-            }
-        return false;
     }
 }
 
@@ -255,30 +202,6 @@ public struct Border : BaseShape
         for (var i = 0; i < c.Length; i++)
             ScreenCoordinates[i] = new PointF((float)MercatorProjection.lonToX(c[i].Longitude),
                 (float)MercatorProjection.latToY(c[i].Latitude));
-    }
-
-    public static bool ShouldBeBorder(MapFeatureData feature)
-    {
-        // https://wiki.openstreetmap.org/wiki/Key:admin_level
-        var foundBoundary = false;
-        var foundLevel = false;
-        foreach (var entry in feature.Properties)
-        {
-            if (entry.Key.StartsWith("boundary") && entry.Value.StartsWith("administrative"))
-            {
-                foundBoundary = true;
-            }
-            if (entry.Key.StartsWith("admin_level") && entry.Value == "2")
-            {
-                foundLevel = true;
-            }
-            if (foundBoundary && foundLevel)
-            {
-                break;
-            }
-        }
-
-        return foundBoundary && foundLevel;
     }
 }
 

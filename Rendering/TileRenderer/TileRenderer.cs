@@ -8,116 +8,155 @@ namespace Mapster.Rendering;
 
 public static class TileRenderer
 {
-    public static BaseShape Tessellate(this MapFeatureData feature, ref BoundingBox boundingBox, ref PriorityQueue<BaseShape, int> shapes)
+    public static BaseShape? Tessellate(this MapFeatureData feature, ref BoundingBox boundingBox, ref PriorityQueue<BaseShape, int> shapes)
     {
         BaseShape? baseShape = null;
 
         var featureType = feature.Type;
-        if (feature.Properties.Any(p => p.Key == "highway" && MapFeature.HighwayTypes.Any(v => p.Value.StartsWith(v))))
-        {
-            var coordinates = feature.Coordinates;
-            var road = new Road(coordinates);
-            baseShape = road;
-            shapes.Enqueue(road, road.ZIndex);
-        }
-        else if (feature.Properties.Any(p => p.Key.StartsWith("water")) && feature.Type != GeometryType.Point)
-        {
-            var coordinates = feature.Coordinates;
+		int renderType = (int)feature.RenderType;
+		// Feature-level ___X check
+		switch ((RenderType)renderType) {
+            case RenderType.PLACE_NAME: {
+                var coordinates = feature.Coordinates;
+                var popPlace = new PopulatedPlace(coordinates, feature);
+                baseShape = popPlace;
+                shapes.Enqueue(popPlace, popPlace.ZIndex);
+                break;
+            }
 
-            var waterway = new Waterway(coordinates, feature.Type == GeometryType.Polygon);
-            baseShape = waterway;
-            shapes.Enqueue(waterway, waterway.ZIndex);
-        }
-        else if (Border.ShouldBeBorder(feature))
-        {
-            var coordinates = feature.Coordinates;
-            var border = new Border(coordinates);
-            baseShape = border;
-            shapes.Enqueue(border, border.ZIndex);
-        }
-        else if (PopulatedPlace.ShouldBePopulatedPlace(feature))
-        {
-            var coordinates = feature.Coordinates;
-            var popPlace = new PopulatedPlace(coordinates, feature);
-            baseShape = popPlace;
-            shapes.Enqueue(popPlace, popPlace.ZIndex);
-        }
-        else if (feature.Properties.Any(p => p.Key.StartsWith("railway")))
-        {
-            var coordinates = feature.Coordinates;
-            var railway = new Railway(coordinates);
-            baseShape = railway;
-            shapes.Enqueue(railway, railway.ZIndex);
-        }
-        else if (feature.Properties.Any(p => p.Key.StartsWith("natural") && featureType == GeometryType.Polygon))
-        {
-            var coordinates = feature.Coordinates;
-            var geoFeature = new GeoFeature(coordinates, feature);
-            baseShape = geoFeature;
-            shapes.Enqueue(geoFeature, geoFeature.ZIndex);
-        }
-        else if (feature.Properties.Any(p => p.Key.StartsWith("boundary") && p.Value.StartsWith("forest")))
-        {
-            var coordinates = feature.Coordinates;
-            var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Forest);
-            baseShape = geoFeature;
-            shapes.Enqueue(geoFeature, geoFeature.ZIndex);
-        }
-        else if (feature.Properties.Any(p => p.Key.StartsWith("landuse") && (p.Value.StartsWith("forest") || p.Value.StartsWith("orchard"))))
-        {
-            var coordinates = feature.Coordinates;
-            var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Forest);
-            baseShape = geoFeature;
-            shapes.Enqueue(geoFeature, geoFeature.ZIndex);
-        }
-        else if (feature.Type == GeometryType.Polygon && feature.Properties.Any(p
-                     => p.Key.StartsWith("landuse") && (p.Value.StartsWith("residential") || p.Value.StartsWith("cemetery") || p.Value.StartsWith("industrial") || p.Value.StartsWith("commercial") ||
-                                                        p.Value.StartsWith("square") || p.Value.StartsWith("construction") || p.Value.StartsWith("military") || p.Value.StartsWith("quarry") ||
-                                                        p.Value.StartsWith("brownfield"))))
-        {
-            var coordinates = feature.Coordinates;
-            var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Residential);
-            baseShape = geoFeature;
-            shapes.Enqueue(geoFeature, geoFeature.ZIndex);
-        }
-        else if (feature.Type == GeometryType.Polygon && feature.Properties.Any(p
-                     => p.Key.StartsWith("landuse") && (p.Value.StartsWith("farm") || p.Value.StartsWith("meadow") || p.Value.StartsWith("grass") || p.Value.StartsWith("greenfield") ||
-                                                        p.Value.StartsWith("recreation_ground") || p.Value.StartsWith("winter_sports") || p.Value.StartsWith("allotments"))))
-        {
-            var coordinates = feature.Coordinates;
-            var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Plain);
-            baseShape = geoFeature;
-            shapes.Enqueue(geoFeature, geoFeature.ZIndex);
-        }
-        else if (feature.Type == GeometryType.Polygon &&
-                 feature.Properties.Any(p => p.Key.StartsWith("landuse") && (p.Value.StartsWith("reservoir") || p.Value.StartsWith("basin"))))
-        {
-            var coordinates = feature.Coordinates;
-            var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Water);
-            baseShape = geoFeature;
-            shapes.Enqueue(geoFeature, geoFeature.ZIndex);
-        }
-        else if (feature.Type == GeometryType.Polygon && feature.Properties.Any(p => p.Key.StartsWith("building")))
-        {
-            var coordinates = feature.Coordinates;
-            var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Residential);
-            baseShape = geoFeature;
-            shapes.Enqueue(geoFeature, geoFeature.ZIndex);
-        }
-        else if (feature.Type == GeometryType.Polygon && feature.Properties.Any(p => p.Key.StartsWith("leisure")))
-        {
-            var coordinates = feature.Coordinates;
-            var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Residential);
-            baseShape = geoFeature;
-            shapes.Enqueue(geoFeature, geoFeature.ZIndex);
-        }
-        else if (feature.Type == GeometryType.Polygon && feature.Properties.Any(p => p.Key.StartsWith("amenity")))
-        {
-            var coordinates = feature.Coordinates;
-            var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Residential);
-            baseShape = geoFeature;
-            shapes.Enqueue(geoFeature, geoFeature.ZIndex);
-        }
+            case RenderType.WATERWAY: {
+                var coordinates = feature.Coordinates;
+                var waterway = new Waterway(coordinates, feature.Type == GeometryType.Polygon);
+                baseShape = waterway;
+                shapes.Enqueue(waterway, waterway.ZIndex);
+                break;
+            }
+
+            case RenderType.LU__N_FOREST: {
+                var coordinates = feature.Coordinates;
+                var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Forest);
+                baseShape = geoFeature;
+                shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                break;
+            }
+
+            case RenderType.LU__N_PLAIN: {
+                var coordinates = feature.Coordinates;
+                var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Plain);
+                baseShape = geoFeature;
+                shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                break;
+            }
+
+            case RenderType.LU__N_HILLS: {
+                var coordinates = feature.Coordinates;
+                var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Hills);
+                baseShape = geoFeature;
+                shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                break;
+            }
+
+            case RenderType.LU__N_MOUNTAINS: {
+                var coordinates = feature.Coordinates;
+                var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Mountains);
+                baseShape = geoFeature;
+                shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                break;
+            }
+
+            case RenderType.LU__N_DESERT: {
+                var coordinates = feature.Coordinates;
+                var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Desert);
+                baseShape = geoFeature;
+                shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                break;
+            }
+
+            case RenderType.LU__N_WATER: {
+                var coordinates = feature.Coordinates;
+                var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Water);
+                baseShape = geoFeature;
+                shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                break;
+            }
+
+            default: {
+                // Subcategory-level __X_ check
+                switch((RenderType)(renderType / 10 * 10)) {
+                    case RenderType.LU__LEISURE: {
+                        var coordinates = feature.Coordinates;
+                        var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Leisure);
+                        baseShape = geoFeature;
+                        shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                        break;
+                    }
+
+                    default: {
+                        // Category-level _X__ check
+                        switch((RenderType)(renderType / 100 * 100)) {
+                            case RenderType.LU_RESIDENTIAL: {
+                                var coordinates = feature.Coordinates;
+                                var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Residential);
+                                baseShape = geoFeature;
+                                shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                                break;
+                            }
+
+                            default: {
+                                // General-level X___ check
+                                switch((RenderType)(renderType / 1000 * 1000)) {
+                                    case RenderType.UNKNOWN: {
+                                        // No idea how to render unknown stuff, probably map compilation error, silently ignore
+                                        return null;
+                                    }
+
+                                    case RenderType.HIGHWAY: {
+                                        var coordinates = feature.Coordinates;
+                                        var road = new Road(coordinates);
+                                        baseShape = road;
+                                        shapes.Enqueue(road, road.ZIndex);
+                                        break;
+                                    }
+
+                                    case RenderType.RAILWAY: {
+                                        var coordinates = feature.Coordinates;
+                                        var railway = new Railway(coordinates);
+                                        baseShape = railway;
+                                        shapes.Enqueue(railway, railway.ZIndex);
+                                        break;
+                                    }
+
+                                    case RenderType.BORDER: {
+                                        var coordinates = feature.Coordinates;
+                                        var border = new Border(coordinates);
+                                        baseShape = border;
+                                        shapes.Enqueue(border, border.ZIndex);
+                                        break;
+                                    }
+
+                                    case RenderType.LANDUSE: {
+                                        var coordinates = feature.Coordinates;
+                                        var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Unknown);
+                                        baseShape = geoFeature;
+                                        shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                                        break;
+                                    }
+
+                                    default: {
+                                        // TODO: This should ideally use some already configured logging system instead of Console.Error
+                                        Console.Error.WriteLine($"Unimplemented RenderType: {renderType}");
+                                        return null;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+		}
 
         if (baseShape != null)
         {
