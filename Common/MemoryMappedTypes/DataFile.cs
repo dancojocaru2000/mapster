@@ -156,10 +156,9 @@ public unsafe class DataFile : IDisposable
 				"tertiary"       => RenderType.H__TERTIARY,
 				"residential"    => RenderType.H__RESIDENTIAL,
 				"living_street"  => RenderType.H__RESIDENTIAL,
-				// "service"        => RenderType.H__SERVICE,
-				// "track"          => RenderType.H__TRACK,
-				_                => RenderType.UNKNOWN,
-				// _                => RenderType.HIGHWAY,
+				"service"        => RenderType.H__SERVICE,
+				"track"          => RenderType.H__TRACK,
+				_                => RenderType.HIGHWAY,
 			};
 		} 
 		else if (properties.Any(p => p.Key.StartsWith("water")) && geometryType != GeometryType.Point) 

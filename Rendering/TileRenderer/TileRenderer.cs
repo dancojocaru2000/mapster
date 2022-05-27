@@ -91,6 +91,32 @@ public static class TileRenderer
                         break;
                     }
 
+                    case RenderType.H__MOTORWAY:
+                    case RenderType.H__TRUNK:
+                    case RenderType.H__PRIMARY:
+                    case RenderType.H__SECONDARY:
+                    case RenderType.H__TERTIARY:
+                    case RenderType.H__RESIDENTIAL:
+                    case RenderType.H__TRACK: {
+                        var coordinates = feature.Coordinates;
+                        var road = new Road(
+                            coordinates, 
+                            (RenderType)(renderType / 10 * 10) switch {
+                                RenderType.H__MOTORWAY     => RoadType.Motorway,
+                                RenderType.H__TRUNK        => RoadType.Trunk,
+                                RenderType.H__PRIMARY      => RoadType.Primary,
+                                RenderType.H__SECONDARY    => RoadType.Secondary,
+                                RenderType.H__TERTIARY     => RoadType.Tertiary,
+                                RenderType.H__RESIDENTIAL  => RoadType.Residential,
+                                RenderType.H__TRACK        => RoadType.Track,
+                                _                          => RoadType.Unknown,
+                            }
+                        );
+                        baseShape = road;
+                        shapes.Enqueue(road, road.ZIndex);
+                        break;
+                    }
+
                     default: {
                         // Category-level _X__ check
                         switch((RenderType)(renderType / 100 * 100)) {
