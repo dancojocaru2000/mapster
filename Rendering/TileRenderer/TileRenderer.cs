@@ -79,6 +79,14 @@ public static class TileRenderer
                 shapes.Enqueue(geoFeature, geoFeature.ZIndex);
                 break;
             }
+ 
+            case RenderType.LU_R__FOUNTAIN: {
+                var coordinates = feature.Coordinates;
+                var geoFeature = new GeoFeature(coordinates, GeoFeature.GeoFeatureType.Water);
+                baseShape = geoFeature;
+                shapes.Enqueue(geoFeature, geoFeature.ZIndex);
+                break;
+            }           
 
             default: {
                 // Subcategory-level __X_ check

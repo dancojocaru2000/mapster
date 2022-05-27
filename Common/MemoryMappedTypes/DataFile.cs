@@ -216,7 +216,11 @@ public unsafe class DataFile : IDisposable
 		}
 		else if (geometryType == GeometryType.Polygon && properties.Any(p => p.Key.StartsWith("amenity")))
 		{
-			return RenderType.LU_RESIDENTIAL;
+			return properties.Where(p => p.Key.StartsWith("amenity")).First().Value switch
+			{
+				"fountain"   => RenderType.LU_R__FOUNTAIN,
+				_            => RenderType.LU_RESIDENTIAL,
+			};
 		}
 		else if (geometryType == GeometryType.Polygon && properties.Any(p => p.Key.StartsWith("leisure")))
 		{

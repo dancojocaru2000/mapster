@@ -275,18 +275,18 @@ public struct Road : BaseShape
                     break;
                 }
                 case RoadType.Secondary: {
-                    fgPen = new Pen(Color.Orange, 1.6f);                                         
-                    bgPen = new Pen(Color.Yellow, 1.8f);
-                    break;
-                }
-                case RoadType.Tertiary: {
                     fgPen = new Pen(Color.Yellow, 1.6f);                                         
                     bgPen = new Pen(Color.Yellow, 1.8f);
                     break;
                 }
-                case RoadType.Residential: {
+                case RoadType.Tertiary: {
                     fgPen = new Pen(Color.White, 1.6f);                                         
                     bgPen = new Pen(Color.DarkGray, 1.8f);
+                    break;
+                }
+                case RoadType.Residential: {
+                    fgPen = new Pen(Color.White, 1.5f);                                         
+                    bgPen = new Pen(Color.DarkGray, 1.6f);
                     break;
                 }
                 case RoadType.Track: {

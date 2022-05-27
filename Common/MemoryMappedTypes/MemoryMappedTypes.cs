@@ -155,6 +155,7 @@ public enum RenderType : int
     LU__N_WATER      =  5116,
     LU__LEISURE      =  5120,
     LU_RESIDENTIAL   =  5200,
+    LU_R__FOUNTAIN   =  5201,
 }
 
 [StructLayout(LayoutKind.Explicit, Pack = 1)]
